@@ -1,28 +1,3 @@
-Multicore support not enabled. Proceeding with single-core trimming.
-Path to Cutadapt set as: 'cutadapt' (default)
-Cutadapt seems to be working fine (tested command 'cutadapt --version')
-Cutadapt version: 4.9
-single-core operation.
-igzip command line interface 2.31.0
-igzip detected. Using igzip for decompressing
-
-No quality encoding type selected. Assuming that the data provided uses Sanger encoded Phred scores (default)
-
-Output will be written into the directory: /Users/yakamozchan/project/mouse/output/trim/
-
-
-AUTO-DETECTING ADAPTER TYPE
-===========================
-Attempting to auto-detect adapter type from the first 1 million sequences of the first file (>> SRR7368841.fastq.gz <<)
-
-Found perfect matches for the following adapter sequences:
-Adapter type	Count	Sequence	Sequences analysed	Percentage
-Illumina	65577	AGATCGGAAGAGC	1000000	6.56
-Nextera	1	CTGTCTCTTATA	1000000	0.00
-smallRNA	0	TGGAATTCTCGG	1000000	0.00
-Using Illumina adapter for trimming (count: 65577). Second best hit was Nextera (count: 1)
-
-Writing report to '/Users/yakamozchan/project/mouse/output/trim/SRR7368841.fastq.gz_trimming_report.txt'
 
 SUMMARISING RUN PARAMETERS
 ==========================
@@ -33,28 +8,15 @@ Cutadapt version: 4.9
 Number of cores used for trimming: 1
 Quality Phred score cutoff: 20
 Quality encoding type selected: ASCII+33
+Using Illumina adapter for trimming (count: 65577). Second best hit was Nextera (count: 1)
 Adapter sequence: 'AGATCGGAAGAGC' (Illumina TruSeq, Sanger iPCR; auto-detected)
 Maximum trimming error rate: 0.1 (default)
 Minimum required adapter overlap (stringency): 1 bp
 Minimum required sequence length before a sequence gets removed: 20 bp
 Running FastQC on the data once trimming has completed
-Output file(s) will be GZIP compressed
-
-Cutadapt seems to be fairly up-to-date (version 4.9). Setting -j 1
-Writing final adapter and quality trimmed output to SRR7368841_trimmed.fq.gz
+Output file will be GZIP compressed
 
 
-  >>> Now performing quality (cutoff '-q 20') and adapter trimming in a single pass for the adapter sequence: 'AGATCGGAAGAGC' from file SRR7368841.fastq.gz <<< 
-10000000 sequences processed
-20000000 sequences processed
-30000000 sequences processed
-40000000 sequences processed
-50000000 sequences processed
-60000000 sequences processed
-70000000 sequences processed
-80000000 sequences processed
-90000000 sequences processed
-100000000 sequences processed
 This is cutadapt 4.9 with Python 3.9.20
 Command line parameters: -j 1 -e 0.1 -q 20 -O 1 -a AGATCGGAAGAGC SRR7368841.fastq.gz
 Processing single-end reads on 1 core ...
