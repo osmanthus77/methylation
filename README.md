@@ -52,3 +52,4 @@ cd ~/project/mouse/sequence
 bismark -o ../output/bismark_align --parallel 4 --genome_folder ../genome *.fastq.gz
 # 合并
 samtools cat -o SRX4241790
+```
