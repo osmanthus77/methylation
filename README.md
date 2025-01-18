@@ -7,7 +7,11 @@ A3A酶将未修饰的胞嘧啶C和5mC转换为尿嘧啶U，5hmC保持不变，�
 aria2:1.37.0  
 fastqc:0.12.1  
 trimgalore:0.6.10  
-bismark:0.24.2   
+bismark:0.24.2  
+R（4.4.2）包：   
+	tidyr：1.3.1
+	dplyr：1.1.4
+	DSS：2.54.0
 ## 0 数据准备：
 测序数据GEO号：[GSE116016](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE116016)   
 使用其中部分测序数据：野生型SRR7368841、SRR7368842；TetTKO SRR7368845    
