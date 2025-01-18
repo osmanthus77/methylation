@@ -9,9 +9,9 @@ fastqc:0.12.1
 trimgalore:0.6.10  
 bismark:0.24.2   
 ## 0 数据准备：
-    测序数据GEO号：[GSE116016](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE116016)   
-    使用其中部分测序数据：野生型SRR7368841、SRR7368842；TetTKO SRR7368845    
-    小鼠基因组：[Ensembl](https://www.ensembl.org/info/data/ftp/index.html)    
+测序数据GEO号：[GSE116016](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE116016)   
+使用其中部分测序数据：野生型SRR7368841、SRR7368842；TetTKO SRR7368845    
+小鼠基因组：[Ensembl](https://www.ensembl.org/info/data/ftp/index.html)    
 
 - 测序数据下载  
 ENSEMBL查询GEO号后`Run Selector`中SRR号，再到ENA中用SRR号获取ftp地址，用`aria2`下载
