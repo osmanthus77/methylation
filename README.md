@@ -8,7 +8,7 @@ aria2:1.37.0
 fastqc:0.12.1  
 trimgalore:0.6.10  
 bismark:0.24.2   
-## 数据准备：
+## 0 数据准备：
     测序数据GEO号：[GSE116016](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE116016)   
     使用其中部分测序数据：野生型SRR7368841、SRR7368842；TetTKO SRR7368845    
     小鼠基因组：[Ensembl](https://www.ensembl.org/info/data/ftp/index.html)    
@@ -30,7 +30,7 @@ wget ftp://ftp.ensembl.org/pub/release-113/fasta/mus_musculus/dna/Mus_musculus.G
 gzip -d Mus_musculus.GRCm39.dna.toplevel.fa.gz
 mv Mus_musculus.GRCm39.dna.toplevel.fa.gz GRCm39.fa
 ```
-## 质控清洗
+## 1 质控清洗
 使用`fastqc`和`trimgalore`：
 ```
 cd ~/project/mouse/sequence
@@ -39,9 +39,9 @@ trim_galore -o ../output/trim --fastqc *.fastq.gz
 ```
 `--fastqc`参数：trim完直接再fastqc质控一次
 
-## 甲基化分析
+## 2 甲基化分析
 使用`Bismark`工具，该工具基于BE-seq，也可以用于ACE-seq，以19号染色体为例
-### 基因组索引(亚硫酸盐版本)
+### 2.1 基因组索引(亚硫酸盐版本)
 使用`Bowtie`和`Bowtie2`建立索引
 ```
 bismark_genome_preparation --bowtie2 ~/project/mouse/genome_chr19
@@ -59,7 +59,7 @@ cd ~/project/mouse/output/bismark_align_chr19
 samtools cat -o SRX4241790_trimmed_bismark_bt2.bam SRR7368841_bismark_bt2.bam SRR7368842_bismark_bt2.bam
 ```
 
-### 比对reads去除重复
+### 2.1 比对reads去除重复
 使用`deduplicate_bismark`
 ```
 cd ~/project/mouse/output
@@ -69,7 +69,7 @@ cd ~/project/mouse/output/bismark_align_chr19
 deduplicate_bismark --bam --output_dir ../deduplicate SRR7368845_bismark_bt2.bam SRX4241790_trimmed_bismark_bt2.bam
 ```
 
-### 提取甲基化信息
+### 2.3 提取甲基化信息
 使用`bismark_methylation_extractor`从比对结果提取甲基化信息
 ```
 cd ~/project/mouse/output
@@ -81,9 +81,9 @@ bismark_methylation_extractor --single-end --gzip --parallel 4 --bedGraph \
 `--bedGraph`：提取完甲基化信息后，甲基化输出写入一个排序后的bedGraph文件中，该文件包含胞嘧啶位置及甲基化状态。
 `--cytosine_report`：bedGraph文件转换后，使用该选项生成全基因组范围内所有胞嘧啶的甲基化报告。
 
-## 下游分析
+## 3 下游分析
 下游分析，包括寻找特定位点、检测差异化甲级位点DML、差异化甲基区域DMR，使用R包`DSS`差异甲基化分析。
-### 输入数据准备
+### 3.1 输入数据准备
 DSS要求每个CG位点上总结为以下信息：染色体编号、基因组坐标、总reads数、甲基化的reads数   
 所需输入数据从bismark结果中的`.cov`文件转换，提取`.cov`文件中的列，生成DSS要求的输入格式   
 `.cov`文件包含的列：`chr`、`start`、`end`、`methylation`、`count methylated`、`count unmethylated`   
@@ -123,4 +123,58 @@ func_read_file <- function(file_name){
 }
 
 lapply(file_names, func_read_file)
+```
+用Rscript得到相同结果：
+```
+cd ~/project/mouse/output/Ranalysis
+Rscript $HOME/project/mouse/Scripts/bismark_result_transfer.R SRR7368845_methylation_result.txt SRX4241790_methylation_result.txt
+```
+
+### 3.2 DML/DMR分析
+使用R包`DSS`来寻找DML（差异甲基化位点）或DMR（差异甲基化区域）
+```R
+setwd("~/project/mouse/output/Ranalysis")
+
+BiocManager::install("DSS")
+library(tidyr)
+library(dplyr)
+library(DSS)
+
+first_file <- "./SRX4241790_methylation_result_transfered.txt"
+second_file <- "./SRR7368845_methylation_result_transfered.txt"
+file_prefix <- "mm_chr19"
+file_save_path <- "./"
+
+# 输入数据
+first_raw_data <- read.table(first_file, header = T, stringsAsFactors = F)
+second_raw_data <- read.table(second_file, header = T, stringsAsFactors = F)
+
+# 为创建BSseq对象做准备（转换为适合DSS的输入格式）
+DSS_first_input_data <- first_raw_data %>%
+        mutate(chr = paste("chr", chr, sep = "")) %>%
+        mutate(pos = start ,N = methyled + unmethyled, X = methyled) %>%
+        select(chr, pos, N, X)
+DSS_second_input_data <- second_raw_data %>%
+	mutate(chr = paste("chr", chr, sep = "")) %>%
+	mutate(pos = start, N = methyled + unmethyled, X = methyled) %>%
+	select(chr, pos, N, X)
+
+# 创建BEseq对象并进行DML的统计检验
+bsobj <- makeBSseqData(list(DSS_first_input_data, DSS_second_input_data), c("S1", "S2"))
+dmlTest <- DMLtest(bsobj, group1 = c("S1"), group2= c("S2"), smoothing = T)
+
+# 筛选显著的差异甲基化位点
+dmls <- callDML(dmlTest, p.threshold = 0.001)
+# 筛选显著的差异甲基化区域
+dmrs <- callDMR(dmlTest, p.threshold = 0.01)
+
+# 输出结果
+write.table(dmlTest, paste(file_save_path, file_prefix, "_DSS_test_result.txt", sep = ""), row.names = F)
+write.table(dmls, paste(file_save_path, file_prefix, "_DSS_dmls_result.txt", sep = ""), row.names = F)
+write.table(dmrs, paste(file_save_path, file_prefix, "_DSS_dmrs_result.txt", sep = ""), row.names = F)
+```
+使用Rscripts得到相同结果：
+```
+cd cd ~/project/mouse/output/Ranalysis
+Rscript $HOME/project/mouse/Scripts/DSS_differ_analysis.R SRX4241790_methylation_result.txt SRR7368845_methylation_result.txt mm_chr19 ./
 ```
