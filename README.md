@@ -15,7 +15,7 @@ bismark:0.24.2
 
 - 测序数据下载  
 ENSEMBL查询GEO号后`Run Selector`中SRR号，再到ENA中用SRR号获取ftp地址，用`aria2`下载
-```
+```bash
 cd ~/project/mouse/sequence
 aria2c -d . -Z ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR736/001/SRR7368841/SRR7368841.fastq.gz \
     ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR736/002/SRR7368842/SRR7368842.fastq.gz \
@@ -24,7 +24,7 @@ aria2c -d . -Z ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR736/001/SRR7368841/SRR73688
 ps:从NCBI用sratoolkit中`prefetch`下载后的`.sra`文件后，用`md5sum`命令计算md5码，可以与ENA页面的`fastq_md5`码对比，确认数据是否完整
 - 参考基因组数据、
 ENSEMBL下载
-```
+```bash
 cd ~/project/mouse/genome
 wget ftp://ftp.ensembl.org/pub/release-113/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.toplevel.fa.gz
 gzip -d Mus_musculus.GRCm39.dna.toplevel.fa.gz
@@ -32,7 +32,7 @@ mv Mus_musculus.GRCm39.dna.toplevel.fa.gz GRCm39.fa
 ```
 ## 1 质控清洗
 使用`fastqc`和`trimgalore`：
-```
+```bash
 cd ~/project/mouse/sequence
 fastqc -t 3 -o ../output/fastqc *.gz
 trim_galore -o ../output/trim --fastqc *.fastq.gz
@@ -43,12 +43,12 @@ trim_galore -o ../output/trim --fastqc *.fastq.gz
 使用`Bismark`工具，该工具基于BE-seq，也可以用于ACE-seq，以19号染色体为例
 ### 2.1 基因组索引(亚硫酸盐版本)
 使用`Bowtie`和`Bowtie2`建立索引
-```
+```bash
 bismark_genome_preparation --bowtie2 ~/project/mouse/genome_chr19
 ```
 ### **比对**
 甲基化分析核心步骤
-```
+```bash
 mkdir ~/project/mouse/output/bismark_align_chr19
 cd ~/project/mouse/sequence
 
@@ -59,9 +59,9 @@ cd ~/project/mouse/output/bismark_align_chr19
 samtools cat -o SRX4241790_trimmed_bismark_bt2.bam SRR7368841_bismark_bt2.bam SRR7368842_bismark_bt2.bam
 ```
 
-### 2.1 比对reads去除重复
+### 2.2 比对reads去除重复
 使用`deduplicate_bismark`
-```
+```bash
 cd ~/project/mouse/output
 mkdir deduplicate
 cd ~/project/mouse/output/bismark_align_chr19
@@ -71,7 +71,7 @@ deduplicate_bismark --bam --output_dir ../deduplicate SRR7368845_bismark_bt2.bam
 
 ### 2.3 提取甲基化信息
 使用`bismark_methylation_extractor`从比对结果提取甲基化信息
-```
+```bash
 cd ~/project/mouse/output
 mkdir methylation_extractor
 bismark_methylation_extractor --single-end --gzip --parallel 4 --bedGraph \
@@ -87,7 +87,7 @@ bismark_methylation_extractor --single-end --gzip --parallel 4 --bedGraph \
 DSS要求每个CG位点上总结为以下信息：染色体编号、基因组坐标、总reads数、甲基化的reads数   
 所需输入数据从bismark结果中的`.cov`文件转换，提取`.cov`文件中的列，生成DSS要求的输入格式   
 `.cov`文件包含的列：`chr`、`start`、`end`、`methylation`、`count methylated`、`count unmethylated`   
-```
+```bash
 cd ~/project/mouse/output
 mkdir Ranalysis
 cd Ranalysis
@@ -125,7 +125,7 @@ func_read_file <- function(file_name){
 lapply(file_names, func_read_file)
 ```
 用Rscript得到相同结果：
-```
+```bash
 cd ~/project/mouse/output/Ranalysis
 Rscript $HOME/project/mouse/Scripts/bismark_result_transfer.R SRR7368845_methylation_result.txt SRX4241790_methylation_result.txt
 ```
@@ -174,7 +174,7 @@ write.table(dmls, paste(file_save_path, file_prefix, "_DSS_dmls_result.txt", sep
 write.table(dmrs, paste(file_save_path, file_prefix, "_DSS_dmrs_result.txt", sep = ""), row.names = F)
 ```
 使用Rscripts得到相同结果：
-```
+```bash
 cd cd ~/project/mouse/output/Ranalysis
 Rscript $HOME/project/mouse/Scripts/DSS_differ_analysis.R SRX4241790_methylation_result.txt SRR7368845_methylation_result.txt mm_chr19 ./
 ```
